@@ -27,14 +27,17 @@ class MyHandler(BaseHTTPRequestHandler):
 
             # for local testing
             my_ip = '127.0.0.1'
-
+            
             if 'noask' in q:
                 q['noask'].append("%s_%s" % (my_ip, my_port))
             else:
                 q['noask'] = ["%s_%s" % (my_ip, my_port)]
 
             mashines = FileReader.getFileJSON('mashines.txt')
+            # mashines = self.removeNoask(mashines, q['noask'])
+
             q['ttl'][0] = int(q['ttl'][0]) - 1
+
             q = self.fixQuery(q)
             print(q)
 
@@ -43,17 +46,20 @@ class MyHandler(BaseHTTPRequestHandler):
                 dest_port = mashine[1]
                 no_ask = '%s_%s' % (dest_ip, dest_port)
 
-                if no_ask in q['noask']:
+                if no_ask in q['noask'] or dest_ip == q['sendip'] and dest_port == q['sendport']:
                     print('not sending to ' + no_ask)
                     continue
 
                 print('sending to ' + dest_port)
 
-                sender = RequestSender()
-                try:
-                    sender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
-                except ConnectionRefusedError:
-                    print("connection refused: %s:%s" % (dest_ip, dest_port))
+                # TODO: NOW ACTUALLY SEND THE MOTHERFUCKING REQUEST,
+                #       WITHOUT CRASHING THE WHOLE THING
+
+                # sender = RequestSender()
+                # try:
+                #     sender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
+                # except ConnectionRefusedError:
+                #     print("connection refused: %s:%s" % (dest_ip, dest_port))
 
 
             if False:
@@ -101,6 +107,14 @@ class MyHandler(BaseHTTPRequestHandler):
         q2['ttl'] = q['ttl'][0]
         q2['noask'] = q['noask']
         return q2
+
+    def removeNoask(self, list, no_ask):
+        new_list = []
+        for i in range(0, len(list)):
+            elem = '%s_%s' % (list[i][0], list[i][1])
+            if not elem in no_ask:
+                new_list.append(list[i])
+        return new_list
 
     def log_request(self, code=None, size=None):
         print('Request')
