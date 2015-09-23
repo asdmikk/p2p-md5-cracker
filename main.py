@@ -27,25 +27,24 @@ if __name__ == "__main__":
     if 'port' in args:
         port = args['port']
 
-    if 'hash' in args:
-        mashines = FileReader.getFileJSON('mashines.txt')
-        print(mashines)
-
-        q = {
-            'sendip': socket.gethostbyname(socket.gethostname()),
-            'sendport': port,
-            'ttl': 5,
-            'id': 'kuusepuukuller'
-        }
-        q['sendip'] = '127.0.0.1'
-
-        for mashine in mashines:
-            dest_ip = mashine[0]
-            dest_port = mashine[1]
-            try:
-                RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
-            except ConnectionRefusedError:
-                print("connection refused: %s:%s" % (dest_ip, dest_port))
+    # if 'hash' in args:
+    #     mashines = FileReader.getFileJSON('mashines.txt')
+    #
+    #     q = {
+    #         'sendip': socket.gethostbyname(socket.gethostname()),
+    #         'sendport': port,
+    #         'ttl': 5,
+    #         'id': 'kuusepuukuller'
+    #     }
+    #     q['sendip'] = '127.0.0.1'
+    #
+    #     for mashine in mashines:
+    #         dest_ip = mashine[0]
+    #         dest_port = mashine[1]
+    #         try:
+    #             RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
+    #         except ConnectionRefusedError:
+    #             print("connection refused: %s:%s" % (dest_ip, dest_port))
 
 
     # print(socket.gethostbyname(socket.gethostname()))

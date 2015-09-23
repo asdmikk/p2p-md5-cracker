@@ -6,14 +6,35 @@ from request_sender import RequestSender
 import socket
 import json
 import random
+import time
 
 class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        print("Just received a GET request")
         url = urlparse(self.path)
 
+        if url.path == '/crack':
+            q = parse_qs(url.query)
+            if 'q' in q:
+                mashines = FileReader.getFileJSON('mashines.txt')
+                new_q = {
+                    'sendip': socket.gethostbyname(socket.gethostname()),
+                    'sendport': self.server.server_port,
+                    'ttl': 2,
+                    'id': 'kuusepuukuller'
+                }
+                new_q['sendip'] = '127.0.0.1'
+
+
+                for mashine in mashines:
+                    dest_ip = mashine[0]
+                    dest_port = mashine[1]
+                    try:
+                        RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', new_q)
+                    except ConnectionRefusedError:
+                        print("connection refused: %s:%s" % (dest_ip, dest_port))
+
         if url.path == '/resource':
-            print('request to /resource')
+            print('GET to /resource')
             q = parse_qs(url.query)
 
             if not self.checkRequestQuery(q):
@@ -57,11 +78,11 @@ class MyHandler(BaseHTTPRequestHandler):
                     RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
                 except ConnectionRefusedError:
                     print("connection refused: %s:%s" % (dest_ip, dest_port))
-                print('ended')
 
-            self.wfile.write(bytes('Welcome to %s' % self.path, 'UTF-8'))
+            # self.wfile.write(bytes('Welcome to %s' % self.path, 'UTF-8'))
 
             if not bool(random.getrandbits(1)): # if mashine is currently not calculating
+                # time.sleep(1)
                 if 'id' not in q:
                     q['id'] = ['']
                 try:
@@ -74,11 +95,10 @@ class MyHandler(BaseHTTPRequestHandler):
         return
 
     def do_POST(self):
-        print("Just received a POST request")
         url = urlparse(self.path)
 
         if url.path == '/resourcereply':
-            print('request to /resourcereply')
+            print('POST to /resourcereply')
 
 
         return
@@ -92,8 +112,8 @@ class MyHandler(BaseHTTPRequestHandler):
             return False
         return True
 
-    def log_request(self, code=None, size=None):
-        print('Request')
-
-    def log_message(self, format, *args):
-        print('Message')
+    # def log_request(self, code=None, size=None):
+    #     print('Request')
+    #
+    # def log_message(self, format, *args):
+    #     print('Message')
