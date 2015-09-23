@@ -34,16 +34,16 @@ if __name__ == "__main__":
         q = {
             'sendip': socket.gethostbyname(socket.gethostname()),
             'sendport': port,
-            'ttl': 5
+            'ttl': 5,
+            'id': 'kuusepuukuller'
         }
         q['sendip'] = '127.0.0.1'
 
         for mashine in mashines:
             dest_ip = mashine[0]
             dest_port = mashine[1]
-            sender = RequestSender()
             try:
-                sender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
+                RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
             except ConnectionRefusedError:
                 print("connection refused: %s:%s" % (dest_ip, dest_port))
 

@@ -1,9 +1,11 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, urlencode
+import urllib
 from file_reader import FileReader
 from request_sender import RequestSender
 import socket
 import json
+import random
 
 class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -27,57 +29,47 @@ class MyHandler(BaseHTTPRequestHandler):
 
             # for local testing
             my_ip = '127.0.0.1'
-            
+
             if 'noask' in q:
                 q['noask'].append("%s_%s" % (my_ip, my_port))
             else:
                 q['noask'] = ["%s_%s" % (my_ip, my_port)]
 
             mashines = FileReader.getFileJSON('mashines.txt')
-            # mashines = self.removeNoask(mashines, q['noask'])
 
-            q['ttl'][0] = int(q['ttl'][0]) - 1
-
-            q = self.fixQuery(q)
-            print(q)
+            q['ttl'][0] = str(int(q['ttl'][0]) - 1)
+            if int(q['ttl'][0]) < 1:
+                print('TTL IS < 1, RETURNING')
+                return
 
             for mashine in mashines:
                 dest_ip = mashine[0]
                 dest_port = mashine[1]
                 no_ask = '%s_%s' % (dest_ip, dest_port)
 
-                if no_ask in q['noask'] or dest_ip == q['sendip'] and dest_port == q['sendport']:
+                if no_ask in q['noask'] or dest_ip == q['sendip'][0] and dest_port == q['sendport'][0]:
                     print('not sending to ' + no_ask)
                     continue
 
-                print('sending to ' + dest_port)
+                print('sending to port ' + dest_port)
 
-                # TODO: NOW ACTUALLY SEND THE MOTHERFUCKING REQUEST,
-                #       WITHOUT CRASHING THE WHOLE THING
+                try:
+                    RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
+                except ConnectionRefusedError:
+                    print("connection refused: %s:%s" % (dest_ip, dest_port))
+                print('ended')
 
-                # sender = RequestSender()
-                # try:
-                #     sender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
-                # except ConnectionRefusedError:
-                #     print("connection refused: %s:%s" % (dest_ip, dest_port))
+            self.wfile.write(bytes('Welcome to %s' % self.path, 'UTF-8'))
 
+            if not bool(random.getrandbits(1)): # if mashine is currently not calculating
+                if 'id' not in q:
+                    q['id'] = ['']
+                try:
+                    RequestSender.send_resource_reply(q['sendip'][0], q['sendport'][0], my_ip, my_port, q['id'][0], 100)
+                except ConnectionRefusedError:
+                    print("connection refused: %s:%s" % (dest_ip, dest_port))
+                print('ended')
 
-            if False:
-                q = parse_qs(url.query)
-                res = {}
-                res['ip'] = '10.10.10.10'
-                res['port'] = '9999'
-                res['id'] = 'ididid'
-                res['resource'] = 100
-                json_data = json.dumps(res)
-                print('response: ' + json_data)
-
-
-
-
-        # self.send_response(200)
-        # self.send_header("Content-type", "text/html")
-        # self.end_headers()
 
         return
 
@@ -86,7 +78,7 @@ class MyHandler(BaseHTTPRequestHandler):
         url = urlparse(self.path)
 
         if url.path == '/resourcereply':
-            print('resourcereply post')
+            print('request to /resourcereply')
 
 
         return
@@ -99,22 +91,6 @@ class MyHandler(BaseHTTPRequestHandler):
         if not 'ttl' in q:
             return False
         return True
-
-    def fixQuery(self, q):
-        q2 = {}
-        q2['sendip'] = q['sendip'][0]
-        q2['sendport'] = q['sendport'][0]
-        q2['ttl'] = q['ttl'][0]
-        q2['noask'] = q['noask']
-        return q2
-
-    def removeNoask(self, list, no_ask):
-        new_list = []
-        for i in range(0, len(list)):
-            elem = '%s_%s' % (list[i][0], list[i][1])
-            if not elem in no_ask:
-                new_list.append(list[i])
-        return new_list
 
     def log_request(self, code=None, size=None):
         print('Request')
