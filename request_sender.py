@@ -36,7 +36,7 @@ class RequestSender:
         req = urllib.request.Request(url)
         req.add_header('Content-Type', 'application/json')
         try:
-            res = urllib.request.urlopen(req, data=json_data.encode('UTF-8'), timeout=1)
+            res = urllib.request.urlopen(req, data=json_data.encode('UTF-8'), timeout=2)
             r = res.read()
             print(r)
         except URLError as e:

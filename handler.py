@@ -7,29 +7,38 @@ import socket
 import json
 import random
 import time
+import cgi
 
 class MyHandler(BaseHTTPRequestHandler):
+    # def __init__(self):
+    #     super(MyHandler, self).__init__()
+    #     # self.master = False
+
+    mashines = []
+    slaves = []
+
     def do_GET(self):
         url = urlparse(self.path)
 
         if url.path == '/crack':
-            q = parse_qs(url.query)
-            if 'q' in q:
-                mashines = FileReader.getFileJSON('mashines.txt')
-                new_q = {
-                    'sendip': socket.gethostbyname(socket.gethostname()),
-                    'sendport': self.server.server_port,
-                    'ttl': 2,
+            query = parse_qs(url.query)
+            if 'q' in query:
+                self.mashines = FileReader.getFileJSON('mashines.txt')
+                q = {
+                    'sendip': str(socket.gethostbyname(socket.gethostname())),
+                    'sendport': str(self.server.server_port),
+                    'ttl': '2',
                     'id': 'kuusepuukuller'
                 }
-                new_q['sendip'] = '127.0.0.1'
+                q['sendip'] = '127.0.0.1'
 
-
-                for mashine in mashines:
+                for mashine in self.mashines:
                     dest_ip = mashine[0]
                     dest_port = mashine[1]
+                    if dest_ip == q['sendip'] and dest_port == q['sendport']:
+                        continue
                     try:
-                        RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', new_q)
+                        RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
                     except ConnectionRefusedError:
                         print("connection refused: %s:%s" % (dest_ip, dest_port))
 
@@ -56,14 +65,14 @@ class MyHandler(BaseHTTPRequestHandler):
             else:
                 q['noask'] = ["%s_%s" % (my_ip, my_port)]
 
-            mashines = FileReader.getFileJSON('mashines.txt')
+            self.mashines = FileReader.getFileJSON('mashines.txt')
 
             q['ttl'][0] = str(int(q['ttl'][0]) - 1)
             if int(q['ttl'][0]) < 1:
                 print('TTL IS < 1, RETURNING')
                 return
 
-            for mashine in mashines:
+            for mashine in self.mashines:
                 dest_ip = mashine[0]
                 dest_port = mashine[1]
                 no_ask = '%s_%s' % (dest_ip, dest_port)
@@ -81,15 +90,16 @@ class MyHandler(BaseHTTPRequestHandler):
 
             # self.wfile.write(bytes('Welcome to %s' % self.path, 'UTF-8'))
 
-            if not bool(random.getrandbits(1)): # if mashine is currently not calculating
-                # time.sleep(1)
+            random_bool = bool(random.getrandbits(1))
+
+            if True:
                 if 'id' not in q:
                     q['id'] = ['']
                 try:
                     RequestSender.send_resource_reply(q['sendip'][0], q['sendport'][0], my_ip, my_port, q['id'][0], 100)
                 except ConnectionRefusedError:
                     print("connection refused: %s:%s" % (dest_ip, dest_port))
-                print('ended')
+
 
 
         return
@@ -100,6 +110,14 @@ class MyHandler(BaseHTTPRequestHandler):
         if url.path == '/resourcereply':
             print('POST to /resourcereply')
 
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+
+            data = self.rfile.read(int(self.headers['Content-Length'])).decode('UTF-8')
+            self.slaves.append(data)
+
+            print(data)
 
         return
 
