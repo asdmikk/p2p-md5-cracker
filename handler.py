@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse, urlencode
+from utilis import delay
 import urllib
 from file_reader import FileReader
 from request_sender import RequestSender
@@ -27,7 +28,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 q = {
                     'sendip': str(socket.gethostbyname(socket.gethostname())),
                     'sendport': str(self.server.server_port),
-                    'ttl': '2',
+                    'ttl': '4',
                     'id': 'kuusepuukuller'
                 }
                 q['sendip'] = '127.0.0.1'
@@ -41,6 +42,8 @@ class MyHandler(BaseHTTPRequestHandler):
                         RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
                     except ConnectionRefusedError:
                         print("connection refused: %s:%s" % (dest_ip, dest_port))
+
+                self.doSomeStuff()
 
         if url.path == '/resource':
             print('GET to /resource')
@@ -115,9 +118,13 @@ class MyHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
             data = self.rfile.read(int(self.headers['Content-Length'])).decode('UTF-8')
-            self.slaves.append(data)
 
-            print(data)
+            if data not in self.slaves:
+                self.slaves.append(data)
+
+            # print(data)
+
+
 
         return
 
@@ -129,6 +136,11 @@ class MyHandler(BaseHTTPRequestHandler):
         if not 'ttl' in q:
             return False
         return True
+
+
+    @delay(10.0)
+    def doSomeStuff(self):
+        print(self.slaves)
 
     # def log_request(self, code=None, size=None):
     #     print('Request')
