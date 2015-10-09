@@ -6,6 +6,7 @@ from request_sender import RequestSender
 import socket
 import json
 
+
 class MyHandler(BaseHTTPRequestHandler):
     machines = []
     slaves = []
@@ -36,7 +37,7 @@ class MyHandler(BaseHTTPRequestHandler):
                     dest_port = machine[1]
                     if dest_ip == q['sendip'] and dest_port == q['sendport']:
                         continue
-                    RequestSender.make_resource_request(dest_ip, dest_port, '/resource', q)
+                    RequestSender.make_resource_request(dest_ip, dest_port, q)
 
                 self.send_assignments()
             else:
@@ -83,7 +84,7 @@ class MyHandler(BaseHTTPRequestHandler):
                     print('not sending to ' + no_ask)
                     continue
 
-                RequestSender.make_resource_request(dest_ip, dest_port, '/resource', q)
+                RequestSender.make_resource_request(dest_ip, dest_port, q)
 
             # self.wfile.write(bytes('Welcome to %s' % self.path, 'UTF-8'))
 

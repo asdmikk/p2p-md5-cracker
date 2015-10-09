@@ -8,7 +8,7 @@ import json
 class RequestSender:
 
     @staticmethod
-    def send_md5_result(send_ip, send_port, my_ip, my_port, idf, md5, result_code, resutlt):
+    def send_md5_result(send_ip, send_port, my_ip, my_port, idf, md5, result_code, resutlt, path='/answermd5'):
         data = {
             'ip': my_ip,
             'port': my_port,
@@ -19,7 +19,7 @@ class RequestSender:
         }
         json_data = json.dumps(data)
 
-        url = 'http://' + send_ip + ':' + str(send_port) + '/answermd5'
+        url = 'http://' + send_ip + ':' + str(send_port) + path
         req = urllib.request.Request(url)
         req.add_header('Content-Type', 'application/json')
         try:
@@ -33,7 +33,7 @@ class RequestSender:
         return
 
     @staticmethod
-    def send_md5(send_ip, send_port, my_ip, my_port, idf, md5data):
+    def send_md5(send_ip, send_port, my_ip, my_port, idf, md5data, path='/checkmd5'):
         data = {
             'ip': my_ip,
             'port': my_port,
@@ -45,7 +45,7 @@ class RequestSender:
         }
         json_data = json.dumps(data)
 
-        url = 'http://' + send_ip + ':' + str(send_port) + '/checkmd5'
+        url = 'http://' + send_ip + ':' + str(send_port) + path
         req = urllib.request.Request(url)
         req.add_header('Content-Type', 'application/json')
         try:
@@ -59,7 +59,7 @@ class RequestSender:
         return
 
     @staticmethod
-    def make_resource_request(ip, port, path, q):
+    def make_resource_request(ip, port, q, path='/resource'):
         qs = urllib.parse.urlencode(q, True)
         url = 'http://' + ip + ':' + port + path + '?' + qs
         print('Making resource request to http://' + ip + ':' + port)
@@ -75,7 +75,7 @@ class RequestSender:
         return
 
     @staticmethod
-    def send_resource_reply(send_ip, send_port, my_ip, my_port, idf, resource):
+    def send_resource_reply(send_ip, send_port, my_ip, my_port, idf, resource, path='/resourcereply'):
         data = {
             'ip': my_ip,
             'port': my_port,
@@ -84,7 +84,7 @@ class RequestSender:
         }
         json_data = json.dumps(data)
 
-        url = 'http://' + send_ip + ':' + send_port + '/resourcereply'
+        url = 'http://' + send_ip + ':' + send_port + path
 
         print('Sending resource reply ' + str(resource) + ' to http://' + send_ip + ':' + send_port)
         req = urllib.request.Request(url)
