@@ -8,18 +8,18 @@ import json
 class RequestSender:
 
     @staticmethod
-    def send_md5_result(send_ip, send_port, my_ip, my_port, idf, md5data, result_code, resutlt):
+    def send_md5_result(send_ip, send_port, my_ip, my_port, idf, md5, result_code, resutlt):
         data = {
             'ip': my_ip,
             'port': my_port,
             'id': idf,
-            'md5': md5data['md5'],
+            'md5': md5,
             'result': result_code,
             'resultstring': resutlt
         }
         json_data = json.dumps(data)
 
-        url = 'http://' + send_ip + ':' + send_port + '/answermd5'
+        url = 'http://' + send_ip + ':' + str(send_port) + '/answermd5'
         req = urllib.request.Request(url)
         req.add_header('Content-Type', 'application/json')
         try:
@@ -45,7 +45,7 @@ class RequestSender:
         }
         json_data = json.dumps(data)
 
-        url = 'http://' + send_ip + ':' + send_port + '/checkmd5'
+        url = 'http://' + send_ip + ':' + str(send_port) + '/checkmd5'
         req = urllib.request.Request(url)
         req.add_header('Content-Type', 'application/json')
         try:

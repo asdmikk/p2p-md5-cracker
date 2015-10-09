@@ -4,7 +4,7 @@ from utilis import delay
 from machines import Machines
 from request_sender import RequestSender
 import socket
-
+import json
 
 class MyHandler(BaseHTTPRequestHandler):
     machines = []
@@ -17,13 +17,19 @@ class MyHandler(BaseHTTPRequestHandler):
 
         if url.path == '/crack':
             query = parse_qs(url.query)
-            if 'q' in query:
-                self.hash = query['q']
+            if 'md5' in query:
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+
+                self.hash = query['md5']
                 self.machines = Machines.get_machines()
 
                 q = {'sendip': '127.0.0.1', 'sendport': str(self.server.server_port), 'ttl': '4',
                      'id': 'kuusepuukuller'}
                 # q['sendip'] = str(socket.gethostbyname(socket.gethostname()))
+
+                self.wfile.write(bytes('Starting calculations\n', 'UTF-8'))
 
                 for machine in self.machines:
                     dest_ip = machine[0]
@@ -32,7 +38,12 @@ class MyHandler(BaseHTTPRequestHandler):
                         continue
                     RequestSender.make_resource_request(dest_ip, dest_port, '/resource', q)
 
-                self.send_assignment()
+                self.send_assignments()
+            else:
+                self.send_response(400)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(bytes('No hash given\n', 'UTF-8'))
 
         if url.path == '/resource':
             q = parse_qs(url.query)
@@ -74,12 +85,13 @@ class MyHandler(BaseHTTPRequestHandler):
 
                 RequestSender.make_resource_request(dest_ip, dest_port, '/resource', q)
 
-
             # self.wfile.write(bytes('Welcome to %s' % self.path, 'UTF-8'))
 
             if not self.working:
                 if 'id' not in q: q['id'] = ['']
                 RequestSender.send_resource_reply(q['sendip'][0], q['sendport'][0], my_ip, my_port, q['id'][0], 100)
+            else:
+                RequestSender.send_resource_reply(q['sendip'][0], q['sendport'][0], my_ip, my_port, q['id'][0], 0)
 
         return
 
@@ -95,6 +107,38 @@ class MyHandler(BaseHTTPRequestHandler):
             if data not in self.slaves:
                 self.slaves.append(data)
 
+        if url.path == '/checkmd5':
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+
+            data = self.rfile.read(int(self.headers['Content-Length'])).decode('UTF-8')
+            json_data = json.loads(data)
+
+            # TODO: calculada md5, given the range and symbolrange in json_data
+            resutl = 'sitaxcoolparool'
+            result_code = 0 # 0 - match found, 1 - not found
+
+            my_ip = socket.gethostbyname(socket.gethostname())
+            my_port = self.server.server_port
+
+            # for local testing
+            my_ip = '127.0.0.1'
+
+            RequestSender.send_md5_result(json_data['ip'], json_data['port'], my_ip, my_port, 'idjo', self.hash, result_code, resutl)
+
+        if url.path == '/answermd5':
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+
+            data = self.rfile.read(int(self.headers['Content-Length'])).decode('UTF-8')
+            json_data = json.loads(data)
+
+            if json_data['result'] == 0:
+                print('cracked pass: ' + json_data['resultstring'])
+                # self.wfile.write(bytes('cracked pass: %s\n' % json_data['resultstring'], 'UTF-8'))
+
         return
 
     @staticmethod
@@ -107,10 +151,29 @@ class MyHandler(BaseHTTPRequestHandler):
             return False
         return True
 
-    @delay(10.0)
-    def send_assignment(self):
+    @delay(5.0)
+    def send_assignments(self):
 
-        print(self.slaves)
+        print('slaves: ' + str(self.slaves))
+
+        my_ip = socket.gethostbyname(socket.gethostname())
+        my_port = self.server.server_port
+
+        # for local testing
+        my_ip = '127.0.0.1'
+
+        for slave in self.slaves:
+            slave_json = json.loads(slave)
+
+            # TODO: calculata ranges and symbolrange here
+
+            md5data = {
+                'md5': self.hash,
+                'ranges': ['asd','dsa','???'], # add real ranges later
+                'wildcard': '?', # add real wildcard later
+                'symbolrange': [[3, 10], [100, 150]] # add real symbolrange later
+            }
+            RequestSender.send_md5(slave_json['ip'], slave_json['port'], my_ip, my_port, 'idjo', md5data)
 
     # def log_request(self, code=None, size=None):
     #     print('Request')

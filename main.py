@@ -1,7 +1,11 @@
 from http.server import HTTPServer
 from handler import MyHandler
+from socketserver import ThreadingMixIn
 import sys
 
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    pass
 
 # argv : -p [port]
 #        -h [hash]
@@ -28,7 +32,7 @@ if __name__ == "__main__":
     print('localhost')
 
     try:
-        server = HTTPServer(('127.0.0.1', port), MyHandler)
+        server = ThreadedHTTPServer(('127.0.0.1', port), MyHandler)
         print('Started http server at port ' + str(port))
         server.serve_forever()
     except KeyboardInterrupt:
