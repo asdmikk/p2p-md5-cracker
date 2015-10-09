@@ -1,7 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 from utilis import delay
-from file_reader import FileReader
+from machines import Machines
 from request_sender import RequestSender
 import socket
 
@@ -19,7 +19,7 @@ class MyHandler(BaseHTTPRequestHandler):
             query = parse_qs(url.query)
             if 'q' in query:
                 self.hash = query['q']
-                self.machines = FileReader.get_file_json('machines.txt')
+                self.machines = Machines.get_machines()
 
                 q = {'sendip': '127.0.0.1', 'sendport': str(self.server.server_port), 'ttl': '4',
                      'id': 'kuusepuukuller'}
@@ -56,7 +56,7 @@ class MyHandler(BaseHTTPRequestHandler):
             else:
                 q['noask'] = ["%s_%s" % (my_ip, my_port)]
 
-            self.machines = FileReader.get_file_json('machines.txt')
+            self.machines = Machines.get_machines()
 
             q['ttl'][0] = str(int(q['ttl'][0]) - 1)
             if int(q['ttl'][0]) < 1:
