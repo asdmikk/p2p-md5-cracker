@@ -1,6 +1,7 @@
 import threading
 from functools import wraps
 
+
 def delay(delay=0.):
     """
     Decorator delaying the execution of a function for a while.

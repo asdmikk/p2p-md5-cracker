@@ -1,22 +1,16 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import parse_qs, urlparse, urlencode
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlparse
 from utilis import delay
-import urllib
 from file_reader import FileReader
 from request_sender import RequestSender
 import socket
-import json
-import random
-import time
-import cgi
+
 
 class MyHandler(BaseHTTPRequestHandler):
-    # def __init__(self):
-    #     super(MyHandler, self).__init__()
-    #     # self.master = False
-
-    mashines = []
+    machines = []
     slaves = []
+    hash = ''
+    working = False
 
     def do_GET(self):
         url = urlparse(self.path)
@@ -24,32 +18,26 @@ class MyHandler(BaseHTTPRequestHandler):
         if url.path == '/crack':
             query = parse_qs(url.query)
             if 'q' in query:
-                self.mashines = FileReader.getFileJSON('mashines.txt')
-                q = {
-                    'sendip': str(socket.gethostbyname(socket.gethostname())),
-                    'sendport': str(self.server.server_port),
-                    'ttl': '4',
-                    'id': 'kuusepuukuller'
-                }
-                q['sendip'] = '127.0.0.1'
+                self.hash = query['q']
+                self.machines = FileReader.get_file_json('machines.txt')
 
-                for mashine in self.mashines:
-                    dest_ip = mashine[0]
-                    dest_port = mashine[1]
+                q = {'sendip': '127.0.0.1', 'sendport': str(self.server.server_port), 'ttl': '4',
+                     'id': 'kuusepuukuller'}
+                # q['sendip'] = str(socket.gethostbyname(socket.gethostname()))
+
+                for machine in self.machines:
+                    dest_ip = machine[0]
+                    dest_port = machine[1]
                     if dest_ip == q['sendip'] and dest_port == q['sendport']:
                         continue
-                    try:
-                        RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
-                    except ConnectionRefusedError:
-                        print("connection refused: %s:%s" % (dest_ip, dest_port))
+                    RequestSender.make_resource_request(dest_ip, dest_port, '/resource', q)
 
-                self.doSomeStuff()
+                self.send_assignment()
 
         if url.path == '/resource':
-            print('GET to /resource')
             q = parse_qs(url.query)
 
-            if not self.checkRequestQuery(q):
+            if not self.check_request_query(q):
                 self.send_response(400)
                 self.end_headers()
                 return
@@ -68,42 +56,30 @@ class MyHandler(BaseHTTPRequestHandler):
             else:
                 q['noask'] = ["%s_%s" % (my_ip, my_port)]
 
-            self.mashines = FileReader.getFileJSON('mashines.txt')
+            self.machines = FileReader.get_file_json('machines.txt')
 
             q['ttl'][0] = str(int(q['ttl'][0]) - 1)
             if int(q['ttl'][0]) < 1:
-                print('TTL IS < 1, RETURNING')
+                print('TTL = < 1')
                 return
 
-            for mashine in self.mashines:
-                dest_ip = mashine[0]
-                dest_port = mashine[1]
+            for machine in self.machines:
+                dest_ip = machine[0]
+                dest_port = machine[1]
                 no_ask = '%s_%s' % (dest_ip, dest_port)
 
                 if no_ask in q['noask'] or dest_ip == q['sendip'][0] and dest_port == q['sendport'][0]:
                     print('not sending to ' + no_ask)
                     continue
 
-                print('sending to port ' + dest_port)
+                RequestSender.make_resource_request(dest_ip, dest_port, '/resource', q)
 
-                try:
-                    RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
-                except ConnectionRefusedError:
-                    print("connection refused: %s:%s" % (dest_ip, dest_port))
 
             # self.wfile.write(bytes('Welcome to %s' % self.path, 'UTF-8'))
 
-            random_bool = bool(random.getrandbits(1))
-
-            if True:
-                if 'id' not in q:
-                    q['id'] = ['']
-                try:
-                    RequestSender.send_resource_reply(q['sendip'][0], q['sendport'][0], my_ip, my_port, q['id'][0], 100)
-                except ConnectionRefusedError:
-                    print("connection refused: %s:%s" % (dest_ip, dest_port))
-
-
+            if not self.working:
+                if 'id' not in q: q['id'] = ['']
+                RequestSender.send_resource_reply(q['sendip'][0], q['sendport'][0], my_ip, my_port, q['id'][0], 100)
 
         return
 
@@ -111,35 +87,29 @@ class MyHandler(BaseHTTPRequestHandler):
         url = urlparse(self.path)
 
         if url.path == '/resourcereply':
-            print('POST to /resourcereply')
-
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
 
             data = self.rfile.read(int(self.headers['Content-Length'])).decode('UTF-8')
-
             if data not in self.slaves:
                 self.slaves.append(data)
 
-            # print(data)
-
-
-
         return
 
-    def checkRequestQuery(self, q):
-        if not 'sendip' in q:
+    @staticmethod
+    def check_request_query(q):
+        if 'sendip' not in q:
             return False
-        if not 'sendport' in q:
+        if 'sendport' not in q:
             return False
-        if not 'ttl' in q:
+        if 'ttl' not in q:
             return False
         return True
 
-
     @delay(10.0)
-    def doSomeStuff(self):
+    def send_assignment(self):
+
         print(self.slaves)
 
     # def log_request(self, code=None, size=None):

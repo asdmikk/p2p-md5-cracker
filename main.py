@@ -1,14 +1,11 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from file_reader import FileReader
-from request_sender import RequestSender
+from http.server import HTTPServer
 from handler import MyHandler
 import sys
-import socket
 
 
 # argv : -p [port]
 #        -h [hash]
-def getArgv():
+def get_argv():
     args = {}
     if len(sys.argv) < 2:
         return args
@@ -21,31 +18,11 @@ def getArgv():
     return args
 
 if __name__ == "__main__":
-    args = getArgv()
+    args = get_argv()
 
     port = 1215
     if 'port' in args:
         port = args['port']
-
-    # if 'hash' in args:
-    #     mashines = FileReader.getFileJSON('mashines.txt')
-    #
-    #     q = {
-    #         'sendip': socket.gethostbyname(socket.gethostname()),
-    #         'sendport': port,
-    #         'ttl': 5,
-    #         'id': 'kuusepuukuller'
-    #     }
-    #     q['sendip'] = '127.0.0.1'
-    #
-    #     for mashine in mashines:
-    #         dest_ip = mashine[0]
-    #         dest_port = mashine[1]
-    #         try:
-    #             RequestSender.sendResourceRequest(dest_ip, dest_port, '/resource', q)
-    #         except ConnectionRefusedError:
-    #             print("connection refused: %s:%s" % (dest_ip, dest_port))
-
 
     # print(socket.gethostbyname(socket.gethostname()))
     print('localhost')
