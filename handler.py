@@ -4,6 +4,7 @@ from utilis import delay
 from machines import Machines
 from request_sender import RequestSender
 from MD5cracker import MD5Cracker
+from CharRanges import Ranges
 import socket
 import json
 
@@ -25,7 +26,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
 
-                self.hash = query['md5']
+                self.hash = query['md5'][0]
                 self.machines = Machines.get_machines()
 
                 self.wfile.write(bytes('Starting calculations\n', 'UTF-8'))
@@ -116,23 +117,20 @@ class MyHandler(BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html")
             self.end_headers()
 
+            self.working = True
             data = self.rfile.read(int(self.headers['Content-Length'])).decode('UTF-8')
             json_data = json.loads(data)
 
-            # TODO: calculada md5, given the 'ranges' and 'symbolrange' in json_data
             ranges = json_data['ranges']
             cracker = MD5Cracker()
-            # for trange in ranges:
-            #     result = cracker.md5_crack(json_data['md5'], trange, json_data['wildcard'])
-            #     if result:
-            #         result_code = 0 # 0 - match found, 1 - not found
-            #         break
-            #     else:
-            #         result_code = 1
-            #         result = '------NONE FOUND------'
-
-            result='asd'
-            result_code = 0
+            for trange in ranges:
+                result = cracker.md5_crack(json_data['md5'], trange, json_data['wildcard'])
+                if result:
+                    result_code = 0 # 0 - match found, 1 - not found
+                    break
+                else:
+                    result_code = 1
+                    result = '------NONE FOUND------'
 
             my_ip = socket.gethostbyname(socket.gethostname())
             my_port = self.server.server_port
@@ -140,6 +138,7 @@ class MyHandler(BaseHTTPRequestHandler):
             # for local testing
             my_ip = '127.0.0.1'
 
+            self.working = False
             RequestSender.send_md5_result(json_data['ip'], json_data['port'], my_ip, my_port, 'idjo', self.hash, result_code, result)
 
         if url.path == '/answermd5':
@@ -153,6 +152,8 @@ class MyHandler(BaseHTTPRequestHandler):
             if json_data['result'] == 0:
                 print('cracked pass: ' + json_data['resultstring'])
                 # self.wfile.write(bytes('cracked pass: %s\n' % json_data['resultstring'], 'UTF-8'))
+            else:
+                print('No match found')
 
         return
 
@@ -168,7 +169,6 @@ class MyHandler(BaseHTTPRequestHandler):
 
     @delay(5.0)
     def send_assignments(self):
-
         print('slaves: ' + str(self.slaves))
 
         my_ip = socket.gethostbyname(socket.gethostname())
@@ -177,17 +177,20 @@ class MyHandler(BaseHTTPRequestHandler):
         # for local testing
         my_ip = '127.0.0.1'
 
+        ranges = Ranges()
+        slave_jobs = ranges.make_ranges(len(self.slaves))
+
+        i = 0
         for slave in self.slaves:
             slave_json = json.loads(slave)
-
-            # TODO: calculata ranges and symbolrange here
-
+            print('job: ' + str(slave_jobs[i]))
             md5data = {
                 'md5': self.hash,
-                'ranges': ['ko??','','???'], # add real ranges later
+                'ranges': slave_jobs[i], # add real ranges later
                 'wildcard': '?', # add real wildcard later
                 'symbolrange': [[3, 10], [100, 150]] # add real symbolrange later
             }
+            i += 1
             RequestSender.send_md5(slave_json['ip'], slave_json['port'], my_ip, my_port, 'idjo', md5data)
 
     # def log_request(self, code=None, size=None):

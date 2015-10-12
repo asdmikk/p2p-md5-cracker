@@ -28,7 +28,7 @@ class RequestSender:
         except URLError as e:
             print('answermd5 : ' + str(e.reason))
         except socket.timeout as e:
-            print("Timeout")
+            print("Send md5 result Timeout")
 
         return
 
@@ -49,12 +49,13 @@ class RequestSender:
         req = urllib.request.Request(url)
         req.add_header('Content-Type', 'application/json')
         try:
-            res = urllib.request.urlopen(req, data=json_data.encode('UTF-8'), timeout=2)
+            res = urllib.request.urlopen(req, data=json_data.encode('UTF-8'), timeout=0.1)
             r = res.read()
         except URLError as e:
             print('checkmd5 : ' + str(e.reason))
         except socket.timeout as e:
-            print("Timeout")
+            1 == 1
+            # print("Send md5 Timeout")
 
         return
 

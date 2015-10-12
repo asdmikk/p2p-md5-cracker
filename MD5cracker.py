@@ -17,6 +17,10 @@ class MD5Cracker:
     # 		print("Failed to crack " + tocrack)
 
     def md5_crack(self, hexhash, template, wildcard):
+        # print('CRACKER hash: ' + hexhash)
+        print('CRACKER template: ' + template)
+        # print('CRACKER wildcard: ' + wildcard)
+
         # Instantiate template and crack all instantiations
         # First block recursively instantiates template
         i = 0
