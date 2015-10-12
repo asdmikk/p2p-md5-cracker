@@ -28,13 +28,12 @@ class Ranges:
         #
         # return ['?', '??'] + three + four
 
-        # three_c = ['?']
-        four_c = ['?', '??']
+        three_c = ['?', '??']
         for c in range(32, 126):
             # three_c.append(str(chr(c)) + '??')
-            four_c.append(str(chr(c)) + '??')
+            three_c.append(str(chr(c)) + '??')
 
-        return four_c
+        return three_c
 
 if __name__ == '__main__':
     ranges = Ranges()

@@ -26,6 +26,8 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
 
+                slaves = []
+
                 self.hash = query['md5'][0]
                 self.machines = Machines.get_machines()
 
@@ -179,6 +181,7 @@ class MyHandler(BaseHTTPRequestHandler):
 
         ranges = Ranges()
         slave_jobs = ranges.make_ranges(len(self.slaves))
+        print('jobs count: ' + str(len(slave_jobs)))
 
         i = 0
         for slave in self.slaves:
@@ -186,8 +189,8 @@ class MyHandler(BaseHTTPRequestHandler):
             print('job: ' + str(slave_jobs[i]))
             md5data = {
                 'md5': self.hash,
-                'ranges': slave_jobs[i], # add real ranges later
-                'wildcard': '?', # add real wildcard later
+                'ranges': slave_jobs[i],
+                'wildcard': '?',
                 'symbolrange': [[3, 10], [100, 150]] # add real symbolrange later
             }
             i += 1
