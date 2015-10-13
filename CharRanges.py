@@ -30,7 +30,8 @@ class Ranges:
 
         three_c = ['?', '??']
         for c in range(32, 126):
-            # three_c.append(str(chr(c)) + '??')
+            if chr(c) == '?':
+                continue
             three_c.append(str(chr(c)) + '??')
 
         return three_c

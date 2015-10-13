@@ -33,7 +33,7 @@ class MyHandler(BaseHTTPRequestHandler):
 
                 self.wfile.write(bytes('Starting calculations\n', 'UTF-8'))
 
-                q = {'sendip': '127.0.0.1', 'sendport': str(self.server.server_port), 'ttl': '4',
+                q = {'sendip': '127.0.0.1', 'sendport': str(self.server.server_port), 'ttl': '3',
                      'id': 'kuusepuukuller', 'noask': '127.0.0.1_' + str(self.server.server_port)}
                 # q['sendip'] = str(socket.gethostbyname(socket.gethostname()))
 
@@ -97,8 +97,8 @@ class MyHandler(BaseHTTPRequestHandler):
             if not self.working:
                 if 'id' not in q: q['id'] = ['']
                 RequestSender.send_resource_reply(q['sendip'][0], q['sendport'][0], my_ip, my_port, q['id'][0], 100)
-            else:
-                RequestSender.send_resource_reply(q['sendip'][0], q['sendport'][0], my_ip, my_port, q['id'][0], 0)
+            # else:
+            #     RequestSender.send_resource_reply(q['sendip'][0], q['sendport'][0], my_ip, my_port, q['id'][0], 0)
 
         return
 

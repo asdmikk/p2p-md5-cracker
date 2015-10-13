@@ -1,6 +1,7 @@
 from http.server import HTTPServer
 from handler import MyHandler
 from socketserver import ThreadingMixIn
+import socket
 import sys
 
 
@@ -28,8 +29,8 @@ if __name__ == "__main__":
     if 'port' in args:
         port = args['port']
 
-    # print(socket.gethostbyname(socket.gethostname()))
-    print('localhost')
+    print(socket.gethostbyname(socket.gethostname()))
+    # print('localhost')
 
     try:
         server = ThreadedHTTPServer(('127.0.0.1', port), MyHandler)
